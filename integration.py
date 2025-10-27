@@ -73,7 +73,7 @@ class Integrator:
             return I_2n
  
     def get_simpson_integral(self):
-        if n % 2 == 0:
+        if self.n % 2 == 0:
             raise ValueError("n должно быть нечетным")
         integral = (self.y[0] + self.y[-1] + 4 * np.sum(self.y[1:-1:2]) + 2 * np.sum(self.y[2:-2:2])) * (self.h / 3)
         R = -1.0 * ((self.b - self.a) * (self.h ** 4) / 180) * get_max_derivative(self.function_str, 4, self.a, self.b)
@@ -141,7 +141,6 @@ class Integrator:
         X_i = (self.b + self.a) / 2 + ((self.b - self.a) / 2) * T_i
         Y_i = self.calc_function(X_i)
         integral = ((self.b - self.a) / 2) * np.sum(np.array([A_i[i] * Y_i[i] for i in range(len(Y_i))]))
-        #self.R = ((self.b - self.a)**(2*n+3)) * (factorial(n+1)**4) / ((2*n+3)*factorial(2 * n + 2)**3) * get_max_derivative(self.function_str, 2*n+2, self.a, self.b)
         return integral, fixed_quad(self.calc_function, self.a, self.b, n=n)[0]
   
  
@@ -150,11 +149,13 @@ b = float(input("Введите b: "))
 n = int(input("Введите количество узлов интегрирования: "))
 func_str = input("Введите функцию: ")'''
  
-a = 0.4
-b = 15
-n = 121
-n_gauss = 15
-func_str = "np.cos(x)/(x+2)"
+a = 0
+b = 5
+n = 270001
+n_gauss = 5000
+func_str = "np.cos(5*x*x)"
+
+
  
 try:
     result = sympy_integral(func_str, a, b)
@@ -222,21 +223,12 @@ try:
     table_data_2.append(["Формула трапеций (способ 1)", trapecia_h_opt_1, trapecia_n_opt_1, trapecia_I_opt_1, trapecia_R_opt_1, trapecia_I_s_optimal_1])
 except Exception as e:
     table_data_2.append(["Формула трапеций (способ 1)", "Ошибка", str(e)])
-'''try:
-    trapecia_h_opt_2, trapecia_n_opt_2, trapecia_I_opt_2, trapecia_R_opt_2, trapecia_I_s_optimal_2 = integrator.get_trapecia_with_optimal_h(10 ** (-12), "second")
-    table_data_2.append(["Формула трапеций (способ 2)", trapecia_h_opt_2, trapecia_n_opt_2, trapecia_I_opt_2, trapecia_R_opt_2, trapecia_I_s_optimal_2])
-except Exception as e:
-    table_data_2.append(["Формула трапеций (способ 2)", "Ошибка", str(e)])'''
+
 try:
     simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1 = integrator.get_simpson_with_optimal_h(10 ** (-12), "first")
     table_data_2.append(["Формула Симпсона (способ 1)", simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1])
 except Exception as e:
     table_data_2.append(["Формула Симпсона (способ 1)", "Ошибка", str(e)])
-'''try:
-    simpson_h_opt_2, simpson_n_opt_2, simpson_I_opt_2, simpson_R_opt_2, simpson_I_s_optimal_2 = integrator.get_simpson_with_optimal_h(10 ** (-12), "second")
-    table_data_2.append(["Формула Симпсона (способ 2)", simpson_h_opt_2, simpson_n_opt_2, simpson_I_opt_2, simpson_R_opt_2, simpson_I_s_optimal_2])
-except Exception as e:
-    table_data_2.append(["Формула Симпсона (способ 2)", "Ошибка", str(e)])'''
 
 print(tabulate(table_data_2, headers=headers_2, tablefmt="grid", floatfmt=("", ".15f", "",".15f","",".15f")))
 
