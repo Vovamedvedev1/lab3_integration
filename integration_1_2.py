@@ -70,6 +70,7 @@ class Integrator:
                 self.y = self.calc_function(self.x)
                 I_2n, R_2n, I_2ns = self.get_trapecia_integral()
                 print(f"I_n = {I_n}; I_2n = {I_2n}; Разница = {abs(I_2n - I_n)}")
+            print("Оптимальный шаг = ", self.h)
             return I_2n
  
     def get_simpson_integral(self):
@@ -113,6 +114,7 @@ class Integrator:
                 self.y = self.calc_function(self.x)
                 I_2n, R_2n, I_2ns = self.get_simpson_integral()
                 print(f"I_n = {I_n}; I_2n = {I_2n}; Разница = {abs(I_2n - I_n)}")
+            print("Оптимальный шаг = ", self.h)
             return I_2n
  
     def get_3_8_integral(self):
@@ -143,99 +145,108 @@ class Integrator:
         integral = ((self.b - self.a) / 2) * np.sum(np.array([A_i[i] * Y_i[i] for i in range(len(Y_i))]))
         return integral, fixed_quad(self.calc_function, self.a, self.b, n=n)[0]
   
+input_flag = True
+try:
+    a = float(input("Введите a: "))
+    b = float(input("Введите b: "))
+    if a >= b:
+        raise Exception("a должно быть строго меньше b")
+    n = int(input("Введите количество узлов интегрирования: "))
+    if n <= 0:
+        raise Exception("n должно быть строго положительным!!!")
+    n_gauss = int(input("Введите степень палинома Гаусса: "))
+    if n_gauss <= 0:
+        raise Exception("n_gauss должно быть строго положительным!!!")
+    func_str = input("Введите функцию: ")
+except Exception as e:
+    print("Ошибка: ", str(e))
+    input_flag = False
  
-'''a = float(input("Введите a: "))
-b = float(input("Введите b: "))
-n = int(input("Введите количество узлов интегрирования: "))
-func_str = input("Введите функцию: ")'''
- 
-a = 0
+'''a = 0
 b = 5
-n = 270001
+n = 540001
 n_gauss = 5000
-func_str = "np.cos(5*x*x)"
+func_str = "np.cos(5*x*x)"'''
+if input_flag:
+    try:
+        result = sympy_integral(func_str, a, b)
+        print(f"∫({func_str})dx от {a} до {b} = {result}")
+    except:
+        print("Не удалось вычислить точное значение интеграла")
+        result = None
 
+    print("----------------------- Задание 1 -----------------------")
+    integrator = Integrator(func_str, a, b, n)
+    
+    headers = ["Метод интегрирования", "Численное значение", "R", "Проверка SciPy"]
+    table_data = []
+    
+    try:
+        trapecia_integral, R_trapecia, trapecia_integral_scipy  = integrator.get_trapecia_integral()
+        table_data.append(["Формула трапеций", trapecia_integral, R_trapecia, trapecia_integral_scipy])
+    except Exception as e:
+        table_data.append(["Формула трапеций", "Ошибка", str(e)])
+    
+    try:
+        simpson_integral, R_simpson, simpson_integral_scipy = integrator.get_simpson_integral()
+        table_data.append(["Формула Симпсона", simpson_integral, R_simpson, simpson_integral_scipy])
+    except Exception as e:
+        table_data.append(["Формула Симпсона", "Ошибка", str(e)])
+    
+    try:
+        three_eight_integral, R_three_eight, three_eight_integral_scipy = integrator.get_3_8_integral()
+        table_data.append(["Формула 3/8", three_eight_integral, R_three_eight, three_eight_integral_scipy])
+    except Exception as e:
+        table_data.append(["Формула 3/8", "Ошибка", str(e)])
+    
+    try:
+        left_rectangle_integral, R_left_rectangle = integrator.rectangle_integral("left")
+        table_data.append(["Формула левых прямоугольников", left_rectangle_integral, R_left_rectangle])
+    except Exception as e:
+        table_data.append(["Формула левых прямоугольников", "Ошибка", str(e)])
+    
+    try:
+        right_rectangle_integral, R_right_rectangle = integrator.rectangle_integral("right")
+        table_data.append(["Формула правых прямоугольников", right_rectangle_integral, R_right_rectangle])
+    except Exception as e:
+        table_data.append(["Формула правых прямоугольников", "Ошибка", str(e)])
+    
+    try:
+        center_rectangle_integral, R_center_rectangle = integrator.rectangle_integral("center")
+        table_data.append(["Формула центральных прямоугольников", center_rectangle_integral, R_center_rectangle])
+    except Exception as e:
+        table_data.append(["Формула центральных прямоугольников", "Ошибка", str(e)])
+    
+    try:
+        gauss_integral, gauss_integral_scipy = integrator.get_gauss_integral(n_gauss)
+        table_data.append([f"Гаусс ({n_gauss} степень)", gauss_integral, "", gauss_integral_scipy])
+    except Exception as e:
+        table_data.append([f"Гаусс ({n_gauss} степень)", "Ошибка", str(e)])
+    
+    print(tabulate(table_data, headers=headers, tablefmt="grid", floatfmt=("", ".15f","",".15f")))
 
- 
-try:
-    result = sympy_integral(func_str, a, b)
-    print(f"∫({func_str})dx от {a} до {b} = {result}")
-except:
-    print("Не удалось вычислить точное значение интеграла")
-    result = None
+    print("----------------------- Задание 2 -----------------------")
+    headers_2 = ["Метод интегрирования", "h", "n", "Численное значение", "R", "Проверка SciPy"]
+    table_data_2 = []
+    print("Способ номер 1")
+    try:
+        trapecia_h_opt_1, trapecia_n_opt_1, trapecia_I_opt_1, trapecia_R_opt_1, trapecia_I_s_optimal_1 = integrator.get_trapecia_with_optimal_h(10 ** (-12), "first")
+        table_data_2.append(["Формула трапеций (способ 1)", trapecia_h_opt_1, trapecia_n_opt_1, trapecia_I_opt_1, trapecia_R_opt_1, trapecia_I_s_optimal_1])
+    except Exception as e:
+        table_data_2.append(["Формула трапеций (способ 1)", "Ошибка", str(e)])
 
-print("----------------------- Задание 1 -----------------------")
-integrator = Integrator(func_str, a, b, n)
- 
-headers = ["Метод интегрирования", "Численное значение", "R", "Проверка SciPy"]
-table_data = []
- 
-try:
-    trapecia_integral, R_trapecia, trapecia_integral_scipy  = integrator.get_trapecia_integral()
-    table_data.append(["Формула трапеций", trapecia_integral, R_trapecia, trapecia_integral_scipy])
-except Exception as e:
-    table_data.append(["Формула трапеций", "Ошибка", str(e)])
- 
-try:
-    simpson_integral, R_simpson, simpson_integral_scipy = integrator.get_simpson_integral()
-    table_data.append(["Формула Симпсона", simpson_integral, R_simpson, simpson_integral_scipy])
-except Exception as e:
-    table_data.append(["Формула Симпсона", "Ошибка", str(e)])
- 
-try:
-    three_eight_integral, R_three_eight, three_eight_integral_scipy = integrator.get_3_8_integral()
-    table_data.append(["Формула 3/8", three_eight_integral, R_three_eight, three_eight_integral_scipy])
-except Exception as e:
-    table_data.append(["Формула 3/8", "Ошибка", str(e)])
- 
-try:
-    left_rectangle_integral, R_left_rectangle = integrator.rectangle_integral("left")
-    table_data.append(["Формула левых прямоугольников", left_rectangle_integral, R_left_rectangle])
-except Exception as e:
-    table_data.append(["Формула левых прямоугольников", "Ошибка", str(e)])
- 
-try:
-    right_rectangle_integral, R_right_rectangle = integrator.rectangle_integral("right")
-    table_data.append(["Формула правых прямоугольников", right_rectangle_integral, R_right_rectangle])
-except Exception as e:
-    table_data.append(["Формула правых прямоугольников", "Ошибка", str(e)])
- 
-try:
-    center_rectangle_integral, R_center_rectangle = integrator.rectangle_integral("center")
-    table_data.append(["Формула центральных прямоугольников", center_rectangle_integral, R_center_rectangle])
-except Exception as e:
-    table_data.append(["Формула центральных прямоугольников", "Ошибка", str(e)])
- 
-try:
-    gauss_integral, gauss_integral_scipy = integrator.get_gauss_integral(n_gauss)
-    table_data.append([f"Гаусс ({n_gauss} степень)", gauss_integral, "", gauss_integral_scipy])
-except Exception as e:
-    table_data.append([f"Гаусс ({n_gauss} степень)", "Ошибка", str(e)])
- 
-print(tabulate(table_data, headers=headers, tablefmt="grid", floatfmt=("", ".15f","",".15f")))
+    try:
+        simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1 = integrator.get_simpson_with_optimal_h(10 ** (-12), "first")
+        table_data_2.append(["Формула Симпсона (способ 1)", simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1])
+    except Exception as e:
+        table_data_2.append(["Формула Симпсона (способ 1)", "Ошибка", str(e)])
 
-print("----------------------- Задание 2 -----------------------")
-headers_2 = ["Метод интегрирования", "h", "n", "Численное значение", "R", "Проверка SciPy"]
-table_data_2 = []
-print("Способ номер 1")
-try:
-    trapecia_h_opt_1, trapecia_n_opt_1, trapecia_I_opt_1, trapecia_R_opt_1, trapecia_I_s_optimal_1 = integrator.get_trapecia_with_optimal_h(10 ** (-12), "first")
-    table_data_2.append(["Формула трапеций (способ 1)", trapecia_h_opt_1, trapecia_n_opt_1, trapecia_I_opt_1, trapecia_R_opt_1, trapecia_I_s_optimal_1])
-except Exception as e:
-    table_data_2.append(["Формула трапеций (способ 1)", "Ошибка", str(e)])
+    print(tabulate(table_data_2, headers=headers_2, tablefmt="grid", floatfmt=("", ".15f", "",".15f","",".15f")))
 
-try:
-    simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1 = integrator.get_simpson_with_optimal_h(10 ** (-12), "first")
-    table_data_2.append(["Формула Симпсона (способ 1)", simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1])
-except Exception as e:
-    table_data_2.append(["Формула Симпсона (способ 1)", "Ошибка", str(e)])
+    I_2n = integrator.get_trapecia_with_optimal_h(10**(-12), "second")
+    print("Погрешность = ", 10**(-12))
+    print("Вычисленное значение = ", I_2n)
 
-print(tabulate(table_data_2, headers=headers_2, tablefmt="grid", floatfmt=("", ".15f", "",".15f","",".15f")))
-
-I_2n = integrator.get_trapecia_with_optimal_h(10**(-12), "second")
-print("Погрешность = ", 10**(-12))
-print("Вычисленное значение = ", I_2n)
-
-I_2n = integrator.get_simpson_with_optimal_h(10**(-12), "second")
-print("Погрешность = ", 10**(-12))
-print("Вычисленное значение = ", I_2n)
+    I_2n = integrator.get_simpson_with_optimal_h(10**(-12), "second")
+    print("Погрешность = ", 10**(-12))
+    print("Вычисленное значение = ", I_2n)
