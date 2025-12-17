@@ -9,11 +9,11 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 from math import factorial, ceil
  
-def sympy_integral(func_str, a, b):
+def sympy_integral(func_str, a, b): #Вводим функцию
     x = symbols('x')
     return float(sp.N(integrate(sympify(func_str.replace('np.', '')), (x, a, b))))
  
-def get_max_derivative(function_str, n_dir, a, b):
+def get_max_derivative(function_str, n_dir, a, b): #Вычисляем максимальную по модулю производную n - го порядка
     transformations = standard_transformations + (function_exponentiation,)
     cleaned_string = function_str.replace('np.', '')
     x = sp.Symbol('x')
@@ -21,7 +21,7 @@ def get_max_derivative(function_str, n_dir, a, b):
     nth_deriv_exact = expr.diff(x, n_dir) 
     nth_deriv_func = lambdify(x, nth_deriv_exact, 'numpy')
     x_values = np.linspace(a, b, 1000)
-    deriv_values = np.abs(nth_deriv_func(x_values))
+    deriv_values = np.abs(nth_deriv_func(x_values)) #производные по сетке
     return deriv_values.max()
  
 class Integrator:
@@ -33,7 +33,7 @@ class Integrator:
         self.x = np.linspace(self.a, self.b, self.n)
         self.y = self.calc_function(self.x)
  
-    def get_trapecia_integral(self):
+    def get_trapecia_integral(self): #формула трапеций
         integral = ((self.y[0] + self.y[-1]) / 2 + np.sum(self.y[1:-1])) * (self.h)
         R = -1.0 * ((self.b - self.a) * (self.h ** 2) / 12) * get_max_derivative(self.function_str, 2, self.a, self.b)
         return integral, R, trapezoid(self.y, self.x)
@@ -73,14 +73,14 @@ class Integrator:
             print("Оптимальный шаг = ", self.h)
             return I_2n
  
-    def get_simpson_integral(self):
+    def get_simpson_integral(self): #формула Симпсона
         if self.n % 2 == 0:
             raise ValueError("n должно быть нечетным")
         integral = (self.y[0] + self.y[-1] + 4 * np.sum(self.y[1:-1:2]) + 2 * np.sum(self.y[2:-2:2])) * (self.h / 3)
         R = -1.0 * ((self.b - self.a) * (self.h ** 4) / 180) * get_max_derivative(self.function_str, 4, self.a, self.b)
         return integral, R, simpson(self.y, self.x)
   
-    def get_simpson_with_optimal_h(self, eps, sposob):
+    def get_simpson_with_optimal_h(self, eps, sposob): #2 задание
         if sposob == "first":
             self.h = (180 * eps / (self.b - self.a) / get_max_derivative(self.function_str, 4, self.a, self.b)) ** (1 / 4)
             self.n = int(ceil((self.b - self.a) / self.h)) + 1
@@ -117,14 +117,14 @@ class Integrator:
             print("Оптимальный шаг = ", self.h)
             return I_2n
  
-    def get_3_8_integral(self):
+    def get_3_8_integral(self): #формула трех восьмых
         if (self.n - 1) % 3 != 0:
             raise Exception("n - 1 должно быть кратно трем")
         integral = (self.y[0] + self.y[-1] + 3 * np.sum(self.y[1:-1:3]) + 3 * np.sum(self.y[2:-1:3]) + 2 * np.sum(self.y[3:-1:3])) * (3 * self.h / 8)
         R = -1.0 * ((self.b - self.a) * (self.h ** 4) / 80) * get_max_derivative(self.function_str, 4, self.a, self.b)
         return integral, R, simpson(self.y, self.x) 
  
-    def rectangle_integral(self, flag):
+    def rectangle_integral(self, flag): #формула прямоугольников
         if flag == 'left':
             integral = np.sum(self.y[:-1]) * self.h
             R = -1.0 * ((self.b - self.a) * self.h / 2) * get_max_derivative(self.function_str, 1, self.a, self.b)
@@ -138,10 +138,10 @@ class Integrator:
             R = -1.0 * ((self.b - self.a) * (self.h ** 2) / 24) * get_max_derivative(self.function_str, 2, self.a, self.b)
         return integral, R
  
-    def get_gauss_integral(self, n):
-        T_i, A_i = roots_legendre(n)
-        X_i = (self.b + self.a) / 2 + ((self.b - self.a) / 2) * T_i
-        Y_i = self.calc_function(X_i)
+    def get_gauss_integral(self, n): #формула гаусса
+        T_i, A_i = roots_legendre(n) #T_i - корни многочлена Лежандра, A_i - коэффициеты из нелинейной системы 
+        X_i = (self.b + self.a) / 2 + ((self.b - self.a) / 2) * T_i # новая масштабированная сетка
+        Y_i = self.calc_function(X_i) # значении функции в узлах X_i
         integral = ((self.b - self.a) / 2) * np.sum(np.array([A_i[i] * Y_i[i] for i in range(len(Y_i))]))
         return integral, fixed_quad(self.calc_function, self.a, self.b, n=n)[0]
   
@@ -236,7 +236,7 @@ if input_flag:
         table_data_2.append(["Формула трапеций (способ 1)", "Ошибка", str(e)])
 
     try:
-        simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1 = integrator.get_simpson_with_optimal_h(10 ** (-12), "first")
+        simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1 = integrator.get_simpson_with_optimal_h(10 ** (-12) ,"first")
         table_data_2.append(["Формула Симпсона (способ 1)", simpson_h_opt_1, simpson_n_opt_1, simpson_I_opt_1, simpson_R_opt_1, simpson_I_s_optimal_1])
     except Exception as e:
         table_data_2.append(["Формула Симпсона (способ 1)", "Ошибка", str(e)])
